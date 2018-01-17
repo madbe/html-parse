@@ -16,6 +16,8 @@ urlScraper = (baseUrl) => {
                     console.log('data from scraper received ');
                     results = results.concat(pages);
                     console.log(results);
+                    dataScraper(results);
+
                 })
                 .catch((error) => {
                     console.log('error scraping data');
@@ -23,10 +25,55 @@ urlScraper = (baseUrl) => {
 
         })
         .catch((error) => {
-            console.log('page number unknown');
+            console.log('error getting last page');
         });
 
 
+};
+
+dataScraper = (pagesUtl) => {
+    if (!pagesUtl.length) { return; }
+
+    let data = [];
+    let result = [];
+    let currentPage;
+
+    for(let pageUrl in pagesUtl) {
+        // Setting URL and headers for request
+        let options = {
+            url: pagesUtl[pageUrl],
+            headers: {
+                'User-Agent': 'request'
+            }
+        };
+        request(options, (error, resp, body) => {
+
+            if(!error && resp.statusCode === 200){
+                let $ = cheerio.load(body);
+                $('table.webgrid tbody tr').each(function (i) {
+                    let $gzDownloadUrl = $(this).find('td a').attr('href');
+                    let $updateTime = $(this).find('td').eq(1).text();
+                    let $storeName = $(this).find('td').eq(5).text();
+                    let $priceId = $(this).find('td').eq(6).text();
+
+                    data.push({
+                        no: i + 1,
+                        priceId: $priceId,
+                        gzDownloadUrl: $gzDownloadUrl,
+                        updateTime: $updateTime,
+                        storeName: $storeName
+                    });
+                });
+
+                // console.log('inside func ' + JSON.stringify(data));
+
+            } else {
+                console.log(error);
+            }
+        })
+    }
+    result = result.concat(data);
+    console.log('inside func ' + JSON.stringify(result));
 };
 
 getPagesUrl = (url, lastPage) => {

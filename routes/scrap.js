@@ -4,19 +4,16 @@ const cheerio = require('cheerio');
 urlScraper = (baseUrl) => {
 
     let $url = baseUrl;
-    let results = [];
 
     //get the last page number
     getLastPageNumber($url)
         .then((lastPage) => {
-
-            //get all the site pages
+            //get all the site pages for short test I set the lastPage to 5
             getPagesUrl($url, 5)
                 .then((pages) => {
                     console.log('data from scraper received ');
-                    results = results.concat(pages);
-                    console.log(results);
-                    dataScraper(results)
+                    console.log(pages);
+                    dataScraper(pages)
                         .then((data) =>  {
                             console.log('data from pages received ');
                             console.log(data);
@@ -36,7 +33,11 @@ urlScraper = (baseUrl) => {
         });
 
 
+
+
+
 };
+
 /*
 Scrap the data from the pages and return them as array of json object
 that contain the: gz url download link, time of update and store name

@@ -16,7 +16,14 @@ urlScraper = (baseUrl) => {
                     console.log('data from scraper received ');
                     results = results.concat(pages);
                     console.log(results);
-                    dataScraper(results);
+                    dataScraper(results)
+                        .then((data) =>  {
+                            console.log('data from pages received ');
+                            console.log(data);
+                    })
+                        .catch((error)=>{
+                            console.log(error);
+                        });
 
                 })
                 .catch((error) => {
@@ -30,50 +37,58 @@ urlScraper = (baseUrl) => {
 
 
 };
-
-dataScraper = (pagesUtl) => {
-    if (!pagesUtl.length) { return; }
+/*
+Scrap the data from the pages and return them as array of json object
+that contain the: gz url download link, time of update and store name
+in the network.
+ */
+dataScraper = (pagesUrl) => {
+    if (!pagesUrl.length) { return; }
 
     let data = [];
-    let result = [];
-    let currentPage;
+    let lastPage = pagesUrl.length;
+    return new Promise((resolve, reject) => {
+        for(let pageUrl in pagesUrl) {
+            // Setting URL and headers for request
+            let options = {
+                url: pagesUrl[pageUrl],
+                headers: {
+                    'User-Agent': 'request'
+                }
+            };
+            request(options, (error, resp, body) => {
 
-    for(let pageUrl in pagesUtl) {
-        // Setting URL and headers for request
-        let options = {
-            url: pagesUtl[pageUrl],
-            headers: {
-                'User-Agent': 'request'
-            }
-        };
-        request(options, (error, resp, body) => {
+                if(!error && resp.statusCode === 200){
+                    let $ = cheerio.load(body);
 
-            if(!error && resp.statusCode === 200){
-                let $ = cheerio.load(body);
-                $('table.webgrid tbody tr').each(function (i) {
-                    let $gzDownloadUrl = $(this).find('td a').attr('href');
-                    let $updateTime = $(this).find('td').eq(1).text();
-                    let $storeName = $(this).find('td').eq(5).text();
-                    let $priceId = $(this).find('td').eq(6).text();
+                    $('table.webgrid tbody tr').each(function (i) {
+                        let $gzDownloadUrl = $(this).find('td a').attr('href');
+                        let $updateTime = $(this).find('td').eq(1).text();
+                        let $storeName = $(this).find('td').eq(5).text();
+                        let $priceId = $(this).find('td').eq(6).text();
 
-                    data.push({
-                        no: i + 1,
-                        priceId: $priceId,
-                        gzDownloadUrl: $gzDownloadUrl,
-                        updateTime: $updateTime,
-                        storeName: $storeName
+                        data.push({
+                            no: i + 1,
+                            priceId: $priceId,
+                            gzDownloadUrl: $gzDownloadUrl,
+                            updateTime: $updateTime,
+                            storeName: $storeName
+                        });
+
                     });
-                });
 
-                // console.log('inside func ' + JSON.stringify(data));
+                    if(!--lastPage){
+                        // console.log('inside func ' + JSON.stringify(data));
+                        resolve(data);
+                    }
 
-            } else {
-                console.log(error);
-            }
-        })
-    }
-    result = result.concat(data);
-    console.log('inside func ' + JSON.stringify(result));
+                } else {
+                    console.log(error);
+                    reject(error)
+                }
+            })
+        }
+    });
 };
 
 getPagesUrl = (url, lastPage) => {

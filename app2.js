@@ -1,5 +1,5 @@
 const scraper = require('./routes/scraper');
-const scarp = require('./routes/scarp');
+const scarp = require('./routes/scrap');
 const fs = require('fs');
 const baseUrl = 'http://prices.shufersal.co.il';
 const path = 'prices.json';
